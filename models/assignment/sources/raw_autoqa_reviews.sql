@@ -1,7 +1,7 @@
 
 {{ config(materialized='table') }}
 
-with reviews as(
+with auto_reviews as(
     select
         cast(autoqa_review_id as STRING) as autoqa_review_id,
         cast(payment_id	as INTEGER) as payment_id,
@@ -18,4 +18,18 @@ with reviews as(
 
     where autoqa_review_id is not null
 )
-select * from reviews
+
+select 
+    autoqa_review_id,
+    {{ dbt_utils.generate_surrogate_key(['external_ticket_id','payment_id','payment_token_id'] )}} as unique_conversation_id,
+    payment_id,
+    payment_token_id,
+    external_ticket_id,
+    team_id,
+    reviewee_internal_id,
+    review_created_at_utc,
+    review_updated_at_utc,
+    conversation_created_at_utc,
+    conversation_created_at_date
+
+from auto_reviews
