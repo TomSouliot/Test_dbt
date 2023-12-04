@@ -5,16 +5,16 @@ sources:
     database: ae-ts-assignment
     schema: dbt_ts_assignment
 
-    #loaded_at_field: does not apply for the provided data
+    #loaded_at_field: does not apply for the provided data, so cannot implement a source freshness test as an example for the assignment
 
     tables:
+      - name: seed_autoqa_root_cause_test
+        description: Input data provided for autoqa root causes
       - name: seed_autoqa_ratings_test
         description: Input data provided for autoqa ratings
       - name: seed_autoqa_reviews_test
         description: Input data provided for autoqa reviews
-      - name: seed_autoqa_root_cause_test
-        description: Input data provided for autoqa root causes
-      - name: seed_manual_rating_test
+      - name: seed_manual_ratings_test
         description: Input data provided for manual ratings
       - name: seed_manual_reviews_test
         description: Input data provided for manual reviews
@@ -25,7 +25,7 @@ models:
   - name: raw_autoqa_reviews
     description: >
       Raw data regarding automatically performed reviews.
-      The grain of the model is autoqa_review_id,each review_id should be unique.
+      The grain of the model is autoqa_review_id, thus each review_id should be unique.
     meta:
       owner: "@thomas"
     columns:
@@ -34,6 +34,23 @@ models:
         tests:
           - not_null
           - unique
+      - name: unique_conversation_id
+        description: >
+          Surrogate key created from the combination of external_ticket_id, payment_id, payment_token_id.
+          This key is created in order to be able to join with the grain of the conversation model.
+          Testing for this field is not required as testing is applied on the individual fields below.
+      - name: external_ticket_id
+        description: Unique identifier for the external ticket that the respective rating corresponds to.
+        tests:
+          - not_null
+      - name: payment_id
+        description: Unique identifier for the payment that the respective rating corresponds to.
+        tests:
+          - not_null
+      - name: payment_token_id
+        description: Unique identifier for the payment token that the respective rating corresponds to.
+        tests:
+          - not_null
       - name: review_created_at_utc
         description: UTC timestamp of when the review was created.
       - name: review_updated_at_utc
@@ -42,7 +59,7 @@ models:
   - name: raw_autoqa_ratings
     description: >
       Raw ratings data regarding automatically performed reviews.
-      The grain of the model is autoqa_rating_id, each rating should be unique.
+      The grain of the model is autoqa_rating_id, thus each rating should be unique.
     meta:
       owner: "@thomas"
     columns:
@@ -56,7 +73,15 @@ models:
         tests:
           - not_null
       - name: external_ticket_id
-        description: Unique identified for the external ticket that respective rating corresponds to.
+        description: Unique identifier for the external ticket that the respective rating corresponds to.
+        tests:
+          - not_null
+      - name: payment_id
+        description: Unique identifier for the payment that the respective rating corresponds to.
+        tests:
+          - not_null
+      - name: payment_token_id
+        description: Unique identifier for the payment token that the respective rating corresponds to.
         tests:
           - not_null
 
@@ -74,6 +99,86 @@ models:
           - not_null 
       - name: root_cause
         description: Reason provided to justify the submitted score for the corresponding category.
+        tests:
+          - not_null
+
+  - name: raw_manual_reviews
+    description: >
+      Raw data regarding manually performed reviews.
+      The grain of the model is review_id, thus each review_id should be unique.
+    meta:
+      owner: "@thomas"
+    columns:
+      - name: manual_review_id
+        description: Unique identifier for the review
+        tests:
+          - not_null
+          - unique
+      - name: unique_conversation_id
+        description: >
+          Surrogate key created from the combination of conversation_external_id, payment_id, payment_token_id.
+          This key is created in order to be able to join with the grain of the conversation model.
+          Testing for this field is not required as testing is applied on the individual fields below.
+      - name: conversation_external_id
+        description: Unique identifier for the external ticket that the respective review corresponds to.
+        tests:
+          - not_null
+      - name: payment_id
+        description: Unique identifier for the payment that the respective rating corresponds to.
+        tests:
+          - not_null
+      - name: payment_token_id
+        description: Unique identifier for the payment token that the respective rating corresponds to.
+        tests:
+          - not_null
+      
+  - name: raw_manual_ratings
+    description: >
+      Data for the ratings that are perfomed manually.
+      The grain of the model should be rating. A surrogate key from  review_id + category_id ensures uniqueness for the grain of the model.
+    meta:
+      owner: "@thomas"
+    columns:
+      - name: manual_rating_id
+        description: Unique identifier for the rating. Created as surrogate key from the combination of review_id and the category_id
+        tests:
+          - not_null
+          - unique
+      - name: manual_review_id
+        description: Unique identifier for the review that the respective rating corresponds to.
+        tests:
+          - not_null
+      - name: category_id
+        description: Unique identifier for the category that the respective rating corresponds to.
+        tests:
+          - not_null
+  
+  - name: raw_conversations
+    description: >
+      Raw data provided for the covnersations of the tickets, including the calculated sentiment from klaus.
+      The grain of the model is (not clear the business context).
+      A surrogate key is created from the combination of external_ticket_id, payment_id and payment_token_id.
+      This surrogate key ensures uniquenes and allows to be joined with manual and autoqa reviews.
+    meta:
+      owner: "@thomas"
+    columns:
+      - name: unique_conversation_id
+        description: >
+          Surrogate key created from the combination of external_ticket_id, payment_id, payment_token_id.
+          This key is created in order to ensure uniquenes and to be able to join conversations with manual and autoqa reviews.
+        tests:
+            - not_null
+            - unique
+      - name: external_ticket_id
+        description: Unique identifier for the external ticket that the respective review corresponds to.
+        tests:
+          - not_null
+      - name: payment_id
+        description: Unique identifier for the payment that the respective rating corresponds to.
+        tests:
+          - not_null
+      - name: payment_token_id
+        description: Unique identifier for the payment token that the respective rating corresponds to.
         tests:
           - not_null
       
