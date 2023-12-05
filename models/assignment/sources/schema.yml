@@ -40,15 +40,15 @@ models:
           This key is created in order to be able to join with the grain of the conversation model.
           Testing for this field is not required as testing is applied on the individual fields below.
       - name: external_ticket_id
-        description: Unique identifier for the external ticket that the respective rating corresponds to.
+        description: Unique identifier for the external ticket that the respective review corresponds to.
         tests:
           - not_null
       - name: payment_id
-        description: Unique identifier for the payment that the respective rating corresponds to.
+        description: Unique identifier for the payment that the respective review corresponds to.
         tests:
           - not_null
       - name: payment_token_id
-        description: Unique identifier for the payment token that the respective rating corresponds to.
+        description: Unique identifier for the payment token that the respective review corresponds to.
         tests:
           - not_null
       - name: review_created_at_utc
@@ -135,12 +135,13 @@ models:
   - name: raw_manual_ratings
     description: >
       Data for the ratings that are perfomed manually.
-      The grain of the model should be rating. A surrogate key from  review_id + category_id ensures uniqueness for the grain of the model.
+      The grain of the model should be rating. A surrogate key from id created from review_id and category_id.
+      The created surrogate key ensures uniqueness for the grain of the model.
     meta:
       owner: "@thomas"
     columns:
       - name: manual_rating_id
-        description: Unique identifier for the rating. Created as surrogate key from the combination of review_id and the category_id
+        description: Unique identifier for the rating. Created as surrogate key from the combination of review_id and the category_id.
         tests:
           - not_null
           - unique
@@ -155,8 +156,8 @@ models:
   
   - name: raw_conversations
     description: >
-      Raw data provided for the covnersations of the tickets, including the calculated sentiment from klaus.
-      The grain of the model is (not clear the business context).
+      Raw data provided for the conversations of the tickets, including the calculated sentiment from klaus.
+      The grain of the model is ...(business context not clear as explained in the docs).
       A surrogate key is created from the combination of external_ticket_id, payment_id and payment_token_id.
       This surrogate key ensures uniquenes and allows to be joined with manual and autoqa reviews.
     meta:
@@ -170,15 +171,15 @@ models:
             - not_null
             - unique
       - name: external_ticket_id
-        description: Unique identifier for the external ticket that the respective review corresponds to.
+        description: Unique identifier for the external ticket that the respective conversation corresponds to.
         tests:
           - not_null
       - name: payment_id
-        description: Unique identifier for the payment that the respective rating corresponds to.
+        description: Unique identifier for the payment that the respective conversation corresponds to.
         tests:
           - not_null
       - name: payment_token_id
-        description: Unique identifier for the payment token that the respective rating corresponds to.
+        description: Unique identifier for the payment token that the respective conversation corresponds to.
         tests:
           - not_null
       

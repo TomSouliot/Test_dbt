@@ -34,7 +34,7 @@ with manual_reviews as(
 select 
     manual_review_id,
     {{ dbt_utils.generate_surrogate_key(['conversation_external_id','payment_id','payment_token_id'] )}} as unique_conversation_id,
-    conversation_external_id, --seems that corresponds to external_ticket_id, maybe it would make sense to rename for data consistency
+    conversation_external_id,
     payment_id,
     payment_token_id,
     review_created_at,
@@ -52,10 +52,11 @@ select
     score,
     is_seen,
     is_disputed,
-    review_time_seconds, -- no data, guess numeric
+    review_time_seconds,
     is_assignment_reviewed,
     assignment_name
 
 from manual_reviews
 
--- we need to apply not null testing on the individual fields forming the unqiue conversation id in order to avoid any potential duplicates
+-- deduplication (ideally we would need a timestamp of when each row was loaded in the landing table to order properly)
+qualify row_number() over (partition by manual_review_id order by review_updated_at desc) = 1

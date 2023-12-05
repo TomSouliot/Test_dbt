@@ -33,3 +33,6 @@ select
     conversation_created_at_date
 
 from auto_reviews
+
+-- deduplication (ideally we would need a timestamp of when each row was loaded in the landing table to order properly)
+qualify row_number() over (partition by autoqa_review_id order by review_updated_at_utc desc) = 1
