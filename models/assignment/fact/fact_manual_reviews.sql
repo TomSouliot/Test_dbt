@@ -3,8 +3,8 @@
 with manual_ratings_agg as(
     select
         manual_review_id,
-        count(*) as nr_ratings_submitted,
-        count(distinct category_id) as nr_categories_rated
+        count(*) as nr_ratings_performed,
+        count(distinct category_id) as nr_categories_rated -- if data quality is good those 2 metrics should be the same
         
     from {{ ref('raw_manual_ratings') }}
 
@@ -37,7 +37,7 @@ manual_reviews as (
         rv.is_assignment_reviewed,
         rv.assignment_name,
         --ratings' metrics
-        rt.nr_ratings_submitted,
+        rt.nr_ratings_performed,
         rt.nr_categories_rated
 
     from {{ ref('raw_manual_reviews') }} as rv
@@ -70,9 +70,7 @@ select
     is_assignment_reviewed,
     assignment_name,
     --ratings' metrics
-    nr_ratings_submitted,
+    nr_ratings_performed,
     nr_categories_rated
     
 from manual_reviews
-
--- left join we assume that we are in this case where we have complete data

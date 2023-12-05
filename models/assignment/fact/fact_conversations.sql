@@ -1,9 +1,20 @@
 {{ config(materialized='table') }}
 
-with autoqa_reviews_agg as(
+with autoqa_ratings_agg as(
     select
         unique_conversation_id,
-        count(*) as nr_reviews_submitted_autoqa
+        round((sum(rating_score) * 100) / nullif((max(rating_score) * count(*)),0),2) as iqs
+
+    from {{ ref('fact_autoqa_ratings') }}
+
+    group by 1
+
+),
+
+autoqa_reviews_agg as(
+    select
+        unique_conversation_id,
+        count(*) as nr_reviews_performed_autoqa -- no need for distinct because we have ensured uniqueness
         
     from {{ ref('fact_autoqa_reviews') }}
 
@@ -13,7 +24,7 @@ with autoqa_reviews_agg as(
 manual_reviews_agg as(
     select
         unique_conversation_id,
-        count(*) as nr_reviews_submitted_manual
+        count(*) as nr_reviews_performed_manual -- no need for distinct because we have ensured uniqueness
         
     from {{ ref('fact_manual_reviews') }}
 
@@ -50,17 +61,20 @@ conversations as(
         c.most_active_internal_user_id,
         c.imported_at_utc,
         c.deleted_at_utc,
+        -- ratings' metrics
+        art.iqs,
         -- reviews' metrics
-        if(coalesce(arv.nr_reviews_submitted_autoqa,0) >0 ,true,false) as is_auto_reviewed,
-        arv.nr_reviews_submitted_autoqa,
-        if(coalesce(mrv.nr_reviews_submitted_manual,0) >0 ,true,false) as is_manually_reviewed,
-        mrv.nr_reviews_submitted_manual
+        if(coalesce(arv.nr_reviews_performed_autoqa,0) >0 ,true,false) as is_auto_reviewed, 
+        arv.nr_reviews_performed_autoqa, -- should not coalesce metrics that will be used for aggregated calculations
+        if(coalesce(mrv.nr_reviews_performed_manual,0) >0 ,true,false) as is_manually_reviewed,
+        mrv.nr_reviews_performed_manual
 
     from {{ ref('raw_conversations') }} as c
+    left join autoqa_ratings_agg as art
+        on c.unique_conversation_id = art.unique_conversation_id
     left join autoqa_reviews_agg as arv
         on c.unique_conversation_id = arv.unique_conversation_id
     left join manual_reviews_agg as mrv
         on c.unique_conversation_id = mrv.unique_conversation_id
 )
 select * from conversations
--- assumption that we can have both a manual and an autoqa review for a given conversation -- but not sure about the grain of this model

@@ -72,6 +72,11 @@ models:
         description: Unique identifier for the review that the respective rating corresponds to.
         tests:
           - not_null
+      - name: unique_conversation_id
+        description: >
+          Surrogate key created from the combination of external_ticket_id, payment_id, payment_token_id.
+          This key is created in order to be able to join with the grain of the conversation model.
+          Testing for this field is not required as testing is applied on the individual fields below.
       - name: external_ticket_id
         description: Unique identifier for the external ticket that the respective rating corresponds to.
         tests:
@@ -124,11 +129,11 @@ models:
         tests:
           - not_null
       - name: payment_id
-        description: Unique identifier for the payment that the respective rating corresponds to.
+        description: Unique identifier for the payment that the respective review corresponds to.
         tests:
           - not_null
       - name: payment_token_id
-        description: Unique identifier for the payment token that the respective rating corresponds to.
+        description: Unique identifier for the payment token that the respective review corresponds to.
         tests:
           - not_null
       

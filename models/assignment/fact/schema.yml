@@ -1,0 +1,41 @@
+version: 2
+
+sources:
+  - name: dbt_ts_assignment
+    database: ae-ts-assignment
+    schema: dbt_ts_assignment
+
+models:
+  - name: fact_conversations
+    description: >
+      Raw data regarding automatically performed reviews.
+      The grain of the model is autoqa_review_id, thus each review_id should be unique.
+    meta:
+      owner: "@thomas"
+    columns:
+      - name: autoqa_review_id
+        description: Unique identifier for the review.
+        tests:
+          - not_null
+          - unique
+      - name: unique_conversation_id
+        description: >
+          Surrogate key created from the combination of external_ticket_id, payment_id, payment_token_id.
+          This key is created in order to be able to join with the grain of the conversation model.
+          Testing for this field is not required as testing is applied on the individual fields below.
+      - name: external_ticket_id
+        description: Unique identifier for the external ticket that the respective review corresponds to.
+        tests:
+          - not_null
+      - name: payment_id
+        description: Unique identifier for the payment that the respective review corresponds to.
+        tests:
+          - not_null
+      - name: payment_token_id
+        description: Unique identifier for the payment token that the respective review corresponds to.
+        tests:
+          - not_null
+      - name: review_created_at_utc
+        description: UTC timestamp of when the review was created.
+      - name: review_updated_at_utc
+        description: UTC timestamp of when the review was updated.

@@ -3,9 +3,8 @@
 with auto_ratings_agg as(
     select
         autoqa_review_id,
-        count(*) as nr_ratings_submitted,
-        count(distinct rating_category_id) as nr_categories_rated,
-        avg(score) as avg_score_rated
+        count(*) as nr_ratings_performed,
+        count(distinct rating_category_id) as nr_categories_rated -- if data quality is good those 2 metrics should be the same
         
     from {{ ref('fact_autoqa_ratings') }}
 
@@ -26,9 +25,8 @@ autoqa_reviews as (
         rv.conversation_created_at_utc,
         rv.conversation_created_at_date,
         --ratings' metrics
-        rt.nr_ratings_submitted,
-        rt.nr_categories_rated,
-        rt.avg_score_rated
+        rt.nr_ratings_performed,
+        rt.nr_categories_rated
 
     from {{ ref('raw_autoqa_reviews') }} as rv
     left join auto_ratings_agg as rt
@@ -48,8 +46,7 @@ select
     conversation_created_at_utc,
     conversation_created_at_date,
     --ratings' metrics
-    nr_ratings_submitted,
-    nr_categories_rated,
-    avg_score_rated
+    nr_ratings_performed,
+    nr_categories_rated
     
 from autoqa_reviews
