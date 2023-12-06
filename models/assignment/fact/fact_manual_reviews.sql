@@ -36,7 +36,7 @@ manual_reviews as (
         rv.review_time_seconds,
         rv.is_assignment_reviewed,
         rv.assignment_name,
-        --ratings' metrics
+        --ratings' metrics -- should not be coalesced as they could skew metrics
         rt.nr_ratings_performed,
         rt.nr_categories_rated
 

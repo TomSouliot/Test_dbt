@@ -24,7 +24,7 @@ autoqa_reviews as (
         rv.review_updated_at_utc,
         rv.conversation_created_at_utc,
         rv.conversation_created_at_date,
-        --ratings' metrics
+        --ratings' metrics -- should not be coalesced as they could skew metrics
         rt.nr_ratings_performed,
         rt.nr_categories_rated
 

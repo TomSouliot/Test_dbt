@@ -8,7 +8,41 @@ sources:
 models:
   - name: fact_conversations
     description: >
-      Raw data regarding automatically performed reviews.
+      Lists all the conversations for the respective tickets, including the calculated sentiment from klaus.
+      Moreover, contains information about the reviews that were performed for each conversation as well as the calculated iqs metric.
+      The grain of the model is conversation(business context not clear as explained in the docs).
+      A surrogate key is created from the combination of external_ticket_id, payment_id and payment_token_id.
+      This surrogate key ensures uniquenes and allows to be joined with manual and autoqa reviews.
+    meta:
+      owner: "@thomas"
+    columns:
+      - name: unique_conversation_id
+        description: >
+          Surrogate key created from the combination of external_ticket_id, payment_id, payment_token_id.
+          This key is created in order to ensure uniquenes and to be able to join conversations with reviews and ratings.
+        tests:
+            - not_null
+            - unique
+      ## metrics
+      - name: autoqa_iqs
+        description: >
+          Calculated IQs for the conversation. Refers to conversations that have been automatically reviewed.
+          Is calculated according to the formula: ( Sum of ratings / (Max available score x Number of categories)) * 100
+      - name: is_auto_reviewed
+        description: Flag to indicate if the conversation has been auto reviewed.
+      - name: is_manually_reviewed
+        description: Flag to indicate if the conversation has been manually reviewed.
+      - name: is_reviewed_by
+        description: Category to indicate if the conversation has not been reviewed, has been manually reviewed or auto or both.
+      - name: nr_reviews_performed_autoqa
+        description: Indicates how many auto reviews have been performed for the respective conversation.
+      - name: nr_reviews_performed_manual
+        description: Indicates how many manual reviews have been performed for the respective conversation.
+
+  - name: fact_autoqa_reviews
+    description: >
+      Lists all the automatic reviews that have been performed for the conversations. 
+      Moreover, it contains information about the individual ratings of the respective review.
       The grain of the model is autoqa_review_id, thus each review_id should be unique.
     meta:
       owner: "@thomas"
@@ -22,20 +56,66 @@ models:
         description: >
           Surrogate key created from the combination of external_ticket_id, payment_id, payment_token_id.
           This key is created in order to be able to join with the grain of the conversation model.
-          Testing for this field is not required as testing is applied on the individual fields below.
-      - name: external_ticket_id
-        description: Unique identifier for the external ticket that the respective review corresponds to.
         tests:
           - not_null
-      - name: payment_id
-        description: Unique identifier for the payment that the respective review corresponds to.
+      ## metrics
+      - name: nr_ratings_performed
+        description: Metric to indicate how many ratings have been performed for the respective review.
+      - name: nr_categories_rated
+        description: Metric to indicate how many categories have been rated for the respective review.
+
+  - name: fact_manual_reviews
+    description: >
+      Lists all the manual reviews that have been performed for the conversations. 
+      Moreover, it contains information about the individual ratings of the respective review.
+      The grain of the model is manual_review_id, thus each review_id should be unique.
+    meta:
+      owner: "@thomas"
+    columns:
+      - name: manual_review_id
+        description: Unique identifier for the review.
         tests:
           - not_null
-      - name: payment_token_id
-        description: Unique identifier for the payment token that the respective review corresponds to.
+          - unique
+      - name: unique_conversation_id
+        description: >
+          Surrogate key created from the combination of conversation_external_id, payment_id, payment_token_id.
+          This key is created in order to be able to join with the grain of the conversation model.
         tests:
           - not_null
-      - name: review_created_at_utc
-        description: UTC timestamp of when the review was created.
-      - name: review_updated_at_utc
-        description: UTC timestamp of when the review was updated.
+      ## metrics
+      - name: nr_ratings_performed
+        description: Metric to indicate how many ratings have been performed for the respective review.
+      - name: nr_categories_rated
+        description: Metric to indicate how many categories have been rated for the respective review.
+
+  - name: fact_autoqa_ratings
+    description: >
+      Lists the rating of each category that was performed for a review. 
+      Moreover, it contains information about the root causes of the respective rating score.
+      The grain of the model is autoqa_rating_id, thus each rating should be unique.
+    meta:
+      owner: "@thomas"
+    columns:
+      - name: autoqa_rating_id
+        description: Unique identifier for the rating.
+        tests:
+          - not_null
+          - unique 
+      - name: autoqa_review_id
+        description: Unique identifier for the review that the respective rating corresponds to.
+        tests:
+          - not_null
+      - name: unique_conversation_id
+        description: >
+          Surrogate key created from the combination of external_ticket_id, payment_id, payment_token_id.
+          This key is created in order to be able to join with the grain of the conversation model.
+        tests:
+          - not_null
+      ## metrics
+      - name: has_root_cause_provided
+        description: Flag calculated to indicate if any root cause has been provided to justify the score for the respective rating.
+      - name: nr_root_causes_provided
+        description: Metric to indicate how many root causes have been provided to justify the score for the respective rating.
+      - name: nr_distinct_root_causes
+        description: Metric to indicate how many distinct root causes have been provided to justify the score for the respective rating.

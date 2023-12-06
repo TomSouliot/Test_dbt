@@ -162,7 +162,7 @@ models:
   - name: raw_conversations
     description: >
       Raw data provided for the conversations of the tickets, including the calculated sentiment from klaus.
-      The grain of the model is ...(business context not clear as explained in the docs).
+      The grain of the model is conversation(business context not clear as explained in the docs).
       A surrogate key is created from the combination of external_ticket_id, payment_id and payment_token_id.
       This surrogate key ensures uniquenes and allows to be joined with manual and autoqa reviews.
     meta:

@@ -3,7 +3,7 @@
 with autoqa_ratings_agg as(
     select
         unique_conversation_id,
-        round((sum(rating_score) * 100) / nullif((max(rating_score) * count(*)),0),2) as iqs
+        round((sum(rating_score) * 100) / nullif((max(rating_score) * count(*)),0),2) as autoqa_iqs
 
     from {{ ref('fact_autoqa_ratings') }}
 
@@ -62,12 +62,19 @@ conversations as(
         c.imported_at_utc,
         c.deleted_at_utc,
         -- ratings' metrics
-        art.iqs,
+        art.autoqa_iqs,
         -- reviews' metrics
-        if(coalesce(arv.nr_reviews_performed_autoqa,0) >0 ,true,false) as is_auto_reviewed, 
-        arv.nr_reviews_performed_autoqa, -- should not coalesce metrics that will be used for aggregated calculations
+        if(coalesce(arv.nr_reviews_performed_autoqa,0) >0 ,true,false) as is_auto_reviewed,
         if(coalesce(mrv.nr_reviews_performed_manual,0) >0 ,true,false) as is_manually_reviewed,
+        case
+            when (coalesce(arv.nr_reviews_performed_autoqa,0) >0) and (coalesce(mrv.nr_reviews_performed_manual,0) >0) then 'auto and manual'
+            when (coalesce(arv.nr_reviews_performed_autoqa,0) >0) then 'auto'
+            when (coalesce(mrv.nr_reviews_performed_manual,0) >0 ) then 'manual'
+            else 'not reviewed'
+        end as is_reviewed_by,
+        arv.nr_reviews_performed_autoqa, -- should not be coalesced as they could skew metrics
         mrv.nr_reviews_performed_manual
+
 
     from {{ ref('raw_conversations') }} as c
     left join autoqa_ratings_agg as art
