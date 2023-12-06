@@ -13,8 +13,7 @@ with root_causes as(
     where autoqa_rating_id is not null
         and root_cause is not null
 )
+
 select * from root_causes
 
--- state that root_cause na einai null restriction mporei na fugei eksartatei apo to data quality pou thelume
--- den uparxei primary key edw pera
--- to grain den einai gnwsto
+-- deduplication is not performed because we cannot form a primary key
